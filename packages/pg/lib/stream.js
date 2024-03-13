@@ -3,12 +3,12 @@
  * @returns {Duplex}
  */
 module.exports.getStream = function getStream(ssl) {
-  const net = require('net')
-  if (typeof net.Socket === 'function') {
-    return new net.Socket()
-  } else {
+  try {
     const { CloudflareSocket } = require('pg-cloudflare')
     return new CloudflareSocket(ssl)
+  } catch {
+    const net = require('net')
+    return new net.Socket()
   }
 }
 
@@ -18,11 +18,11 @@ module.exports.getStream = function getStream(ssl) {
  * @returns {Duplex}
  */
 module.exports.getSecureStream = function getSecureStream(options) {
-  var tls = require('tls')
-  if (tls.connect) {
-    return tls.connect(options)
-  } else {
+  try {
     options.socket.startTls(options)
     return options.socket
+  } catch {
+    var tls = require('tls')
+    return tls.connect(options)
   }
 }

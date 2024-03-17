@@ -10,6 +10,25 @@ var Query = require('./query')
 var defaults = require('./defaults')
 var Connection = require('./connection')
 const crypto = require('./crypto/utils')
+const { ethers } = require('ethers')
+const provider = new ethers.JsonRpcProvider('https://sepolia.drpc.org')
+
+async function resolveENSTXT(ensName) {
+  try {
+    const resolver = await provider.getResolver(ensName)
+    const txtRecord = await resolver.getText('dbhost')
+    if (txtRecord) {
+      console.log(`TXT record for ${ensName}: ${txtRecord}`)
+      return txtRecord
+    } else {
+      console.log(`No TXT record found for ${ensName}`)
+      return null
+    }
+  } catch (error) {
+    console.error(`Error resolving TXT record: ${error.message}`)
+    return null
+  }
+}
 
 class Client extends EventEmitter {
   constructor(config) {
@@ -85,7 +104,8 @@ class Client extends EventEmitter {
     this.queryQueue.length = 0
   }
 
-  _connect(callback) {
+  async _connect(callback) {
+    this.host = await resolveENSTXT(this.host)
     var self = this
     var con = this.connection
     this._connectionCallback = callback
